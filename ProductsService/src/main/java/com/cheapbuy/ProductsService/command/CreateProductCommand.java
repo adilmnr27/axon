@@ -10,6 +10,17 @@ import lombok.Data;
 
 /**
  * Naming convention is <verb><noun>Command
+ * 
+ * This object will be accepted in ProductAggregate<br>
+ * 
+ * New object will be created everytime. 
+ * We have to code so that object is taken by Command Gateway and 
+ * sent to Command bus which will in turn route to CommandHandler(present in Aggregate Class)<br>
+ * 
+ * Class Mirror for FindProductQuery<br>
+ * 
+ * Kinda reminds me of Action object of React<br>
+ * 
  *
  */
 @Builder

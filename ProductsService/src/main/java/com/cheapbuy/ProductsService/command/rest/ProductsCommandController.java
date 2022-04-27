@@ -17,7 +17,7 @@ import com.cheapbuy.ProductsService.command.CreateProductCommand;
 import com.cheapbuy.ProductsService.core.data.ProductRestModel;
 
 @RestController
-@RequestMapping("products")
+@RequestMapping("/products")
 public class ProductsCommandController {
 
 	/**
