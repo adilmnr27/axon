@@ -1,4 +1,4 @@
-package com.cheapbuy.ProductsService.rest;
+package com.cheapbuy.ProductsService.command.rest;
 
 
 import java.math.BigDecimal;
@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import lombok.Data;
 
 @Data
-public class ProductPojo {
+public class ProductRestModel {
 
 	private String title;
 	private BigDecimal price;

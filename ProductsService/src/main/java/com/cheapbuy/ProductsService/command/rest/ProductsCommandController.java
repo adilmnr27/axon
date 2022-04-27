@@ -1,4 +1,4 @@
-package com.cheapbuy.ProductsService.rest;
+package com.cheapbuy.ProductsService.command.rest;
 
 import java.util.UUID;
 
@@ -17,30 +17,21 @@ import com.cheapbuy.ProductsService.command.CreateProductCommand;
 
 @RestController
 @RequestMapping("products")
-public class ProductsController {
+public class ProductsCommandController {
 
-
-	private final Environment env;
 	/**
 	 * Think of it as an API to send commands to Command Bus. (Command Bus routes commands to Command Handler)
 	 */
 	private final CommandGateway commandGateway;
 	
 	//constructor based injection
-	public ProductsController(Environment env, CommandGateway commandGateway) {
-		this.env=env;
+	public ProductsCommandController( CommandGateway commandGateway) {
 		this.commandGateway=commandGateway;
 	}
 	
-	@GetMapping
-	public String getProduct() {
-		
-		return "Product Fetched " + env.getProperty("local.server.port");
-		//server.port would have given 0 as that it what we have configured in appln.properties.
-	}
 	
 	@PostMapping
-	public String createProduct(@RequestBody ProductPojo product) {
+	public String createProduct(@RequestBody ProductRestModel product) {
 		CreateProductCommand createProductCommand = CreateProductCommand.builder().price(product.getPrice())
 				.title(product.getTitle()).quantity(product.getQuantity()).productId(UUID.randomUUID().toString())
 				.build();

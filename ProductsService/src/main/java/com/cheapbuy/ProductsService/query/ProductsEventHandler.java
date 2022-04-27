@@ -1,4 +1,4 @@
-package com.cheapbuy.ProductsService.core.query;
+package com.cheapbuy.ProductsService.query;
 
 import org.axonframework.eventhandling.EventHandler;
 import org.springframework.beans.BeanUtils;
