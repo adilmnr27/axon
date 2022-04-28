@@ -2,11 +2,10 @@ package com.cheapbuy.ProductsService.command.rest;
 
 import java.util.UUID;
 
+import javax.validation.Valid;
+
 import org.axonframework.commandhandling.gateway.CommandGateway;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,7 +31,7 @@ public class ProductsCommandController {
 	
 	
 	@PostMapping
-	public String createProduct(@RequestBody ProductRestModel product) {
+	public String createProduct(@Valid @RequestBody ProductRestModel product) {
 		CreateProductCommand createProductCommand = CreateProductCommand.builder().price(product.getPrice())
 				.title(product.getTitle()).quantity(product.getQuantity()).productId(UUID.randomUUID().toString())
 				.build();
