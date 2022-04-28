@@ -17,8 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.cheapbuy.ProductsService.command.CreateProductCommand;
 import com.cheapbuy.ProductsService.core.data.ProductRestModel;
 
-
-
 @RestController
 @RequestMapping("/products")
 public class ProductsCommandController {
