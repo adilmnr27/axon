@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import com.cheapbuy.ProductsService.core.data.ProductLookupEntity;
 import com.cheapbuy.ProductsService.core.data.ProductLookupRepository;
 import com.cheapbuy.ProductsService.core.events.ProductCreatedEvent;
-import com.cheapbuy.ProductsService.query.ProductsEventHandler;
 
 @Component
 //Grouping multiple event handlers to same logical group. 

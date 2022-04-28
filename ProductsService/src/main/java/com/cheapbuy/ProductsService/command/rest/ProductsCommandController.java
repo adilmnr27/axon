@@ -39,18 +39,14 @@ public class ProductsCommandController {
 	
 	@PostMapping
 	public String createProduct(@Valid @RequestBody ProductRestModel product) {
-		try {
+		
 			CreateProductCommand createProductCommand = CreateProductCommand.builder().price(product.getPrice())
 					.title(product.getTitle()).quantity(product.getQuantity()).productId(UUID.randomUUID().toString())
 					.build();
 
 			String returnedValue = commandGateway.sendAndWait(createProductCommand);
+			//Exception handled in Controller Advice
 			return "Product Created " + returnedValue;
-		} catch (Exception e) {
-			e.printStackTrace();
-			LOGGER.error("Exception Occured : {} ", e.getLocalizedMessage());
-			return e.getLocalizedMessage();
-		}
 
 	}
 	
