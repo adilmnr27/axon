@@ -64,7 +64,7 @@ public class ProductsEventHandler {
 	 */
 	@EventHandler
 	public void on(ProductCreatedEvent event) {
-		LOGGER.info("Inside Event Handler for ProductCreatedEvent. Proceding to save product in Query Database");
+		LOGGER.info("Inside EventHandler for ProductCreatedEvent. Proceding to save product in Query Database");
 		ProductEntity entityToBeSaved = new ProductEntity();
 		BeanUtils.copyProperties(event, entityToBeSaved);
 		productsRepository.save(entityToBeSaved);

@@ -28,6 +28,7 @@ public class ProductAggregate {
 	 */
 	@AggregateIdentifier // will help to axon framework link createProductCommand with Aggregate
 	private String productId;
+	
 	private String title;
 	private BigDecimal price;
 	private Integer quantity;
