@@ -1,20 +1,21 @@
 package com.cheapbuy.ProductsService.command;
 
+
 import java.math.BigDecimal;
-import java.util.UUID;
 
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
 import org.axonframework.modelling.command.AggregateIdentifier;
 import org.axonframework.modelling.command.AggregateLifecycle;
 import org.axonframework.spring.stereotype.Aggregate;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 
-import com.cheapbuy.ProductsService.command.interceptors.CreateProductCommandInterceptor;
 import com.cheapbuy.ProductsService.core.events.ProductCreatedEvent;
-
-import io.micrometer.core.instrument.util.StringUtils;
+import com.cheapbuy.core.commands.ReserveProductCommand;
+import com.cheapbuy.core.events.ProductReservedEvent;
 
 @Aggregate // Axon framework will know its an Aggregate class
 public class ProductAggregate {
@@ -56,7 +57,7 @@ public class ProductAggregate {
 			throw new IllegalArgumentException("Product Price cannot be zero or less than zero");
 		}
 
-		if (StringUtils.isEmpty(createProductCommand.getTitle())) {
+		if (!StringUtils.hasText(createProductCommand.getTitle())) {
 			throw new IllegalArgumentException("Product Title cannot be empty");
 		}
 
@@ -72,6 +73,47 @@ public class ProductAggregate {
 		// aggregate and scheduled for publication to other event handlers.
 		LOGGER.info("Dispatching productCreatedEvent to all Event Handlers inside this aggregate");
 		AggregateLifecycle.apply(productCreatedEvent);
+
+	}
+	
+	/**
+	 * When it was used as a parameterized constructor it caused problems. The replay
+	 * wouldn't happen, and hence we were not able to get current quantity for cross
+	 * verification
+	 * 
+	 */
+	@CommandHandler
+	public void handle(ReserveProductCommand reserveProductCommand) {
+
+		try {
+
+			LOGGER.info("Inside Command Handler for ReserveProductCommand");
+
+			// There is no need to send a separate query to check quantity
+			// Whenever aggregate is loaded, its state will be restored by Axion framework
+			// automatically
+			// Axion framework will create a new object of Aggregate class and replay the
+			// events from the event store
+			// to bring this aggregate to current state.
+			if (quantity < reserveProductCommand.getQuantity()) {
+				LOGGER.error("There isn't enough product in stock of ProductId: {}",
+						reserveProductCommand.getProductId());
+				throw new IllegalArgumentException(
+						"There isn't enough product in stock of ProductId:" + reserveProductCommand.getProductId());
+			}
+
+			ProductReservedEvent productReservedEvent = ProductReservedEvent.builder()
+					.orderId(reserveProductCommand.getOrderId()).productId(reserveProductCommand.getProductId())
+					.quantity(reserveProductCommand.getQuantity()).userId(reserveProductCommand.getUserId()).build();
+
+			LOGGER.info("Dispatching productReservedEvent to all Event Handlers inside this aggregate");
+			AggregateLifecycle.apply(productReservedEvent);
+
+		} catch (Exception e) {
+			LOGGER.error("Error Occured While Reserving Product. {}", e.getMessage());
+			e.printStackTrace();
+			throw e;
+		}
 
 	}
 
@@ -95,5 +137,12 @@ public class ProductAggregate {
 		this.price = productCreatedEvent.getPrice();
 		this.title = productCreatedEvent.getTitle();
 		this.quantity = productCreatedEvent.getQuantity();
+	}
+	
+	@EventSourcingHandler
+	public void on(ProductReservedEvent productReservedEvent) {
+		LOGGER.info("Inside Event Source Handler for ProductReservedEvent to subtract the quantity ");
+		//We only need to change the available  quantity. Rest w 
+		this.quantity -= productReservedEvent.getQuantity();
 	}
 }

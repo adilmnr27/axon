@@ -78,7 +78,15 @@
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
 		</dependency>
+		
+		<!-- Common Dependency Between Orders ANd products-->
+		<dependency>
+			<groupId>com.cheapbuy</groupId>
+			<artifactId>core</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
+	
 
 
 	<dependencyManagement>

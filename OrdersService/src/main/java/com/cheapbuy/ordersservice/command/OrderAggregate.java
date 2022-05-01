@@ -26,7 +26,7 @@ public class OrderAggregate {
 	
 	private String userId;
 	private String productId;
-	private int quantity;
+	private Integer quantity;
 	private String addressId;
 	private OrderStatus orderStatus;
 

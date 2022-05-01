@@ -2,15 +2,12 @@ package com.cheapbuy.ProductsService;
 
 import org.axonframework.commandhandling.CommandBus;
 import org.axonframework.config.EventProcessingConfigurer;
-import org.axonframework.eventhandling.PropagatingErrorHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
-import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 import org.springframework.context.ApplicationContext;
 
-import com.cheapbuy.ProductsService.command.CreateProductCommand;
 import com.cheapbuy.ProductsService.command.interceptors.CreateProductCommandInterceptor;
 import com.cheapbuy.ProductsService.core.errorhandling.ProductsServiceEventsErrorHandler;
 
@@ -21,7 +18,8 @@ public class ProductsServiceApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(ProductsServiceApplication.class, args);
 	}
-
+	
+   
 	/**
 	 * Registering the Interceptor between Command Gateway and Command Bus
 	 * 
@@ -55,5 +53,5 @@ public class ProductsServiceApplication {
 		config.registerListenerInvocationErrorHandler("product-group", conf -> PropagatingErrorHandler.instance());
 	}
 	*/
-
+	
 }

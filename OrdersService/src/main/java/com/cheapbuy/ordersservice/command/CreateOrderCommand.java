@@ -16,11 +16,11 @@ public class CreateOrderCommand {
 	 * method providing the identifier of the aggregate that a command targets. 
 	 */
 	@TargetAggregateIdentifier
-	public final String orderId;
+	private final String orderId;
 	
 	private final String userId;
 	private final String productId;
-	private final int quantity;
+	private final Integer quantity;
 	private final String addressId;
 	private final OrderStatus orderStatus;
 }
