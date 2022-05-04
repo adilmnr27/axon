@@ -1,5 +1,7 @@
 package com.cheapbuy.ordersservice.saga;
 
+import java.util.UUID;
+
 import org.axonframework.commandhandling.CommandCallback;
 import org.axonframework.commandhandling.CommandMessage;
 import org.axonframework.commandhandling.CommandResultMessage;
@@ -14,7 +16,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.cheapbuy.core.commands.ProcessPaymentCommand;
 import com.cheapbuy.core.commands.ReserveProductCommand;
+import com.cheapbuy.core.events.PaymentProcessedEvent;
 import com.cheapbuy.core.events.ProductReservedEvent;
 import com.cheapbuy.core.model.User;
 import com.cheapbuy.core.query.FetchUserPaymentDetailsQuery;
@@ -100,10 +104,40 @@ public class OrderSaga {
 		
 		if(user==null) {
 			LOGGER.error("User and payment details received from UsersService is null");
-			//start compensating transactionS
+			//start compensating transactions
 		}
 		
-		LOGGER.info("User and its payment info successfully received. Details {}", user);
+		LOGGER.info("User and its payment info successfully received. Starting with payment Processing. Details {}", user);
+		
+		
+		//Dipatching PaymentProcessComand
+		
+		ProcessPaymentCommand paymentCommand = ProcessPaymentCommand.builder()
+				.orderId(productReservedEvent.getOrderId())
+				.paymentDetails(user.getPaymentDetails())
+				.paymentId(UUID.randomUUID().toString())
+				.build();
+		String result = null;
+		try {
+			result = commandGateway.sendAndWait(paymentCommand);
+		} catch (Exception e) {
+			LOGGER.error("Unable to Process payment for orderid {} and paymentid {}. Exception: {}",
+					paymentCommand.getOrderId(), paymentCommand.getPaymentId(), e.getMessage());
+			//Start Compensating transactions
+		}
+		
+		if(result == null) {  //result is the paymentid
+			LOGGER.error("Result is null while processing payment for orderid {} and paymentid {}", paymentCommand.getOrderId(), paymentCommand.getPaymentId());
+			//Start Compensating transactions
+		}
+	
+	}
+	
+	@SagaEventHandler(associationProperty = "orderId")
+	public void handle(PaymentProcessedEvent paymentProcessedEvent) {
+		LOGGER.info("Payment Processing succesfully completed for orderid {} and paymentid {}",
+				paymentProcessedEvent.getOrderId(), paymentProcessedEvent.getPaymentId());
+		
 		SagaLifecycle.end();
 	}
 }
