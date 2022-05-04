@@ -7,8 +7,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 
+import com.cheapbuy.ordersservice.command.OrderAggregate;
 import com.cheapbuy.ordersservice.core.data.OrderEntity;
+import com.cheapbuy.ordersservice.core.data.OrderStatus;
 import com.cheapbuy.ordersservice.core.data.OrdersRepository;
+import com.cheapbuy.ordersservice.core.events.OrderApprovedEvent;
 import com.cheapbuy.ordersservice.core.events.OrderCreatedEvent;
 
 /**
@@ -44,6 +47,23 @@ public class OrdersEventsHandler {
         OrderEntity orderEntity = new OrderEntity();
         BeanUtils.copyProperties(event, orderEntity);
  
+        this.ordersRepository.save(orderEntity);
+    }
+    
+	/**
+	 * Consumes OrderApprovedEvent. Updates the order status in database
+	 * 
+	 * @param event Dispatched event which will be consumed
+	 */
+    @EventHandler
+    public void on(OrderApprovedEvent event) {
+    	LOGGER.info("Inside EventHandler for OrderApprovedEvent.  Proceding to Update the order status in Query database");
+        OrderEntity orderEntity = this.ordersRepository.findByOrderId(event.getOrderId());
+        if(orderEntity==null) {
+        	LOGGER.error("Order Entity Not Found for order id {}", event.getOrderId());
+        	//do something about it
+        }
+        orderEntity.setOrderStatus(OrderStatus.APPROVED);
         this.ordersRepository.save(orderEntity);
     }
     

@@ -1,6 +1,7 @@
 package com.cheapbuy.ordersservice.command;
 
 import org.axonframework.commandhandling.CommandHandler;
+import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.eventsourcing.EventSourcingHandler;
 import org.axonframework.modelling.command.AggregateIdentifier;
 import org.axonframework.modelling.command.AggregateLifecycle;
@@ -9,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cheapbuy.ordersservice.core.data.OrderStatus;
+import com.cheapbuy.ordersservice.core.events.OrderApprovedEvent;
 import com.cheapbuy.ordersservice.core.events.OrderCreatedEvent;
 
 @Aggregate // Axon framework will know its an Aggregate class
@@ -58,6 +60,16 @@ public class OrderAggregate {
 		AggregateLifecycle.apply(orderCreatedEvent);
 
 	}
+	
+	@CommandHandler
+	public void handle(ApproveOrderCommand approveOrderCommand) {
+		//Create and publish the OrderApprovedEvent
+		
+		OrderApprovedEvent orderApprovedEvent = new OrderApprovedEvent(approveOrderCommand.getOrderId());
+		
+		LOGGER.info("OrderAggregate: Dispatching orderApprovedEvent");
+		AggregateLifecycle.apply(orderApprovedEvent);
+	}
 
 	/**
 	 * Naming convention is very short for event sourcing methods. <br>
@@ -83,5 +95,14 @@ public class OrderAggregate {
 		this.quantity = orderCreatedEvent.getQuantity();
 
 	}
+	
+	@EventSourcingHandler
+	public void on(OrderApprovedEvent orderApprovedEvent) {
+		LOGGER.info("Inside Event Source Handler for OrderApprovedEvent ");
+		this.orderStatus = orderApprovedEvent.getOrderStatus();
+	}
+	
+	
+
 
 }

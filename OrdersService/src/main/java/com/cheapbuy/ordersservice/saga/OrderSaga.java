@@ -22,7 +22,9 @@ import com.cheapbuy.core.events.PaymentProcessedEvent;
 import com.cheapbuy.core.events.ProductReservedEvent;
 import com.cheapbuy.core.model.User;
 import com.cheapbuy.core.query.FetchUserPaymentDetailsQuery;
+import com.cheapbuy.ordersservice.command.ApproveOrderCommand;
 import com.cheapbuy.ordersservice.command.OrderAggregate;
+import com.cheapbuy.ordersservice.core.events.OrderApprovedEvent;
 import com.cheapbuy.ordersservice.core.events.OrderCreatedEvent;
 
 /**
@@ -137,6 +139,16 @@ public class OrderSaga {
 	public void handle(PaymentProcessedEvent paymentProcessedEvent) {
 		LOGGER.info("Payment Processing succesfully completed for orderid {} and paymentid {}",
 				paymentProcessedEvent.getOrderId(), paymentProcessedEvent.getPaymentId());
+		
+		ApproveOrderCommand approveOrderCommand = new ApproveOrderCommand(paymentProcessedEvent.getOrderId());
+		commandGateway.send(approveOrderCommand);
+		
+	}
+	
+	@SagaEventHandler(associationProperty = "orderId")
+	public void handle(OrderApprovedEvent orderApprovedEvent) {
+		LOGGER.info("Order Approved succesfully for orderid {} ",
+				orderApprovedEvent.getOrderId());
 		
 		SagaLifecycle.end();
 	}
