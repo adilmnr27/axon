@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import com.cheapbuy.ProductsService.core.data.ProductEntity;
 import com.cheapbuy.ProductsService.core.data.ProductsRepository;
 import com.cheapbuy.ProductsService.core.events.ProductCreatedEvent;
+import com.cheapbuy.core.events.ProductReservationCancelledEvent;
 import com.cheapbuy.core.events.ProductReservedEvent;
 
 
@@ -83,6 +84,20 @@ public class ProductsEventHandler {
 		LOGGER.info("Inside EventHandler for ProductReservedEvent. Proceding to update product quantity in Query Database for productid {}" , event.getProductId());
 		ProductEntity entityToBeUpdated= this.productsRepository.findByProductId(event.getProductId());
 		entityToBeUpdated.setQuantity(entityToBeUpdated.getQuantity()-event.getQuantity());
+		productsRepository.save(entityToBeUpdated);
+	}
+	
+	/**
+	 * Consumes {@code ProductReservationCancelledEvent} Updates/adds the ProductEntity in Query (Read)
+	 * Database
+	 * 
+	 * @param event Dispatched event which will be consumed
+	 */
+	@EventHandler
+	public void on(ProductReservationCancelledEvent event) {
+		LOGGER.info("Inside EventHandler for ProductReservationCancelledEvent. Proceding to update product quantity in Query Database for productid {}" , event.getProductId());
+		ProductEntity entityToBeUpdated= this.productsRepository.findByProductId(event.getProductId());
+		entityToBeUpdated.setQuantity(entityToBeUpdated.getQuantity()+event.getQuantity());
 		productsRepository.save(entityToBeUpdated);
 	}
 }

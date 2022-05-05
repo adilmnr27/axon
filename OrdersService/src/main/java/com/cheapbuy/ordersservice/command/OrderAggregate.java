@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.cheapbuy.ordersservice.core.data.OrderStatus;
 import com.cheapbuy.ordersservice.core.events.OrderApprovedEvent;
 import com.cheapbuy.ordersservice.core.events.OrderCreatedEvent;
+import com.cheapbuy.ordersservice.core.events.OrderRejectedEvent;
 
 @Aggregate // Axon framework will know its an Aggregate class
 public class OrderAggregate {
@@ -70,6 +71,16 @@ public class OrderAggregate {
 		LOGGER.info("OrderAggregate: Dispatching orderApprovedEvent");
 		AggregateLifecycle.apply(orderApprovedEvent);
 	}
+	
+	@CommandHandler
+	public void handle(RejectOrderCommand rejectOrderCommand) {
+		LOGGER.info("OrderAggregate:Received RejectOrderCommand.  Dispatching OrderRejectedEvent");
+		OrderRejectedEvent orderRejectedEvent = OrderRejectedEvent.builder()
+				.orderId(rejectOrderCommand.getOrderId())
+				.cancellationReason(rejectOrderCommand.getCancellationReason())
+				.build();
+		AggregateLifecycle.apply(orderRejectedEvent);
+	}
 
 	/**
 	 * Naming convention is very short for event sourcing methods. <br>
@@ -100,6 +111,12 @@ public class OrderAggregate {
 	public void on(OrderApprovedEvent orderApprovedEvent) {
 		LOGGER.info("Inside Event Source Handler for OrderApprovedEvent ");
 		this.orderStatus = orderApprovedEvent.getOrderStatus();
+	}
+	
+	@EventSourcingHandler
+	public void on(OrderRejectedEvent orderRejectedEvent) {
+		LOGGER.info("Inside Event Source Handler for OrderRejectedEvent ");
+		this.orderStatus = orderRejectedEvent.getOrderStatus();
 	}
 	
 	

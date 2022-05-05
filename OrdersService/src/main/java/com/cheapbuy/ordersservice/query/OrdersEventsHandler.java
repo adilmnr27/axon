@@ -13,6 +13,7 @@ import com.cheapbuy.ordersservice.core.data.OrderStatus;
 import com.cheapbuy.ordersservice.core.data.OrdersRepository;
 import com.cheapbuy.ordersservice.core.events.OrderApprovedEvent;
 import com.cheapbuy.ordersservice.core.events.OrderCreatedEvent;
+import com.cheapbuy.ordersservice.core.events.OrderRejectedEvent;
 
 /**
  * Also know as projection class
@@ -57,13 +58,30 @@ public class OrdersEventsHandler {
 	 */
     @EventHandler
     public void on(OrderApprovedEvent event) {
-    	LOGGER.info("Inside EventHandler for OrderApprovedEvent.  Proceding to Update the order status in Query database");
+    	LOGGER.info("Inside EventHandler for OrderApprovedEvent.  Proceding to Update the order status in Query database to Approved");
         OrderEntity orderEntity = this.ordersRepository.findByOrderId(event.getOrderId());
         if(orderEntity==null) {
         	LOGGER.error("Order Entity Not Found for order id {}", event.getOrderId());
-        	//do something about it
+        	//TODO do something about it
         }
         orderEntity.setOrderStatus(OrderStatus.APPROVED);
+        this.ordersRepository.save(orderEntity);
+    }
+    
+    /**
+	 * Consumes {@code OrderRejectedEvent} . Updates the order status in database
+	 * 
+	 * @param event Dispatched event which will be consumed
+	 */
+    @EventHandler
+    public void on(OrderRejectedEvent event) {
+    	LOGGER.info("Inside EventHandler for OrderRejectedEvent.  Proceding to Update the order status in Query database to Rejected");
+        OrderEntity orderEntity = this.ordersRepository.findByOrderId(event.getOrderId());
+        if(orderEntity==null) {
+        	LOGGER.error("Order Entity Not Found for order id {}", event.getOrderId());
+        	//TODO do something about it
+        }
+        orderEntity.setOrderStatus(OrderStatus.REJECTED);
         this.ordersRepository.save(orderEntity);
     }
     

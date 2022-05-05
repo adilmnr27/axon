@@ -16,9 +16,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.cheapbuy.core.commands.CancelProductReservationCommand;
 import com.cheapbuy.core.commands.ProcessPaymentCommand;
 import com.cheapbuy.core.commands.ReserveProductCommand;
 import com.cheapbuy.core.events.PaymentProcessedEvent;
+import com.cheapbuy.core.events.ProductReservationCancelledEvent;
 import com.cheapbuy.core.events.ProductReservedEvent;
 import com.cheapbuy.core.model.User;
 import com.cheapbuy.core.query.FetchUserPaymentDetailsQuery;
@@ -26,10 +28,12 @@ import com.cheapbuy.ordersservice.command.ApproveOrderCommand;
 import com.cheapbuy.ordersservice.command.OrderAggregate;
 import com.cheapbuy.ordersservice.core.events.OrderApprovedEvent;
 import com.cheapbuy.ordersservice.core.events.OrderCreatedEvent;
+import com.cheapbuy.ordersservice.core.events.OrderRejectedEvent;
 
 /**
  * Orchestration Saga Design Pattern.<br>
  * Saga will publish command and handle events<br>
+ * Compensating transactions are performed in reverse order<br>
  *
  */
 @Saga // Annotation that informs Axon's auto configurer for Spring that a given
@@ -102,11 +106,15 @@ public class OrderSaga {
 		} catch (Exception e) {
 			LOGGER.error("Error in fetch payment details from UsersService. Exception: {}", e.getMessage());
 			//start compensating transactions
+			handle(productReservedEvent,e.getMessage());
+			return;
 		}
 		
 		if(user==null) {
 			LOGGER.error("User and payment details received from UsersService is null");
 			//start compensating transactions
+			handle(productReservedEvent,"User Payment Details were null");
+			return;
 		}
 		
 		LOGGER.info("User and its payment info successfully received. Starting with payment Processing. Details {}", user);
@@ -126,13 +134,34 @@ public class OrderSaga {
 			LOGGER.error("Unable to Process payment for orderid {} and paymentid {}. Exception: {}",
 					paymentCommand.getOrderId(), paymentCommand.getPaymentId(), e.getMessage());
 			//Start Compensating transactions
+			handle(productReservedEvent,e.getMessage());
+			return;
 		}
 		
 		if(result == null) {  //result is the paymentid
 			LOGGER.error("Result is null while processing payment for orderid {} and paymentid {}", paymentCommand.getOrderId(), paymentCommand.getPaymentId());
 			//Start Compensating transactions
+			handle(productReservedEvent,"Result is null while processing payment for orderid " + paymentCommand.getOrderId() + " and paymentid " + paymentCommand.getPaymentId());
+			return;
 		}
 	
+	}
+	
+	/**
+	 * Raise command to Cancel Product reservation
+	 * @param productReservedEvent The event which did had problems
+	 * @param reasonForCancellation The reason why the product reserved event failed
+	 */
+	private void handle(ProductReservedEvent productReservedEvent, String reasonForCancellation) {
+		CancelProductReservationCommand cancelProductReservationCommand = CancelProductReservationCommand.builder()
+				.productId(productReservedEvent.getProductId())
+				.orderId(productReservedEvent.getOrderId())
+				.quantity(productReservedEvent.getQuantity())
+				.userId(productReservedEvent.getUserId())
+				.cancellationReason(reasonForCancellation)
+				.build();
+		
+		commandGateway.send(cancelProductReservationCommand);
 	}
 	
 	@SagaEventHandler(associationProperty = "orderId")
@@ -151,5 +180,19 @@ public class OrderSaga {
 				orderApprovedEvent.getOrderId());
 		
 		SagaLifecycle.end();
+	}
+	
+	@SagaEventHandler(associationProperty = "orderId")
+	public void handle(ProductReservationCancelledEvent productReservationCancelledEvent) {
+		LOGGER.info("OrderSaga: Inside ProductReservationCancelledEvent for orderid {} . Proceeding to start compensating transaction to Reject Order",
+				productReservationCancelledEvent.getOrderId());
+		
+	}
+	
+	@SagaEventHandler(associationProperty = "orderId")
+	@EndSaga
+	public void handle(OrderRejectedEvent orderRejectedEvent) {
+		LOGGER.info("OrderSaga: Order Rejected for orderid {} ",
+				orderRejectedEvent.getOrderId());
 	}
 }

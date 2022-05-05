@@ -14,7 +14,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import com.cheapbuy.ProductsService.core.events.ProductCreatedEvent;
+import com.cheapbuy.core.commands.CancelProductReservationCommand;
 import com.cheapbuy.core.commands.ReserveProductCommand;
+import com.cheapbuy.core.events.ProductReservationCancelledEvent;
 import com.cheapbuy.core.events.ProductReservedEvent;
 
 @Aggregate // Axon framework will know its an Aggregate class
@@ -116,6 +118,19 @@ public class ProductAggregate {
 		}
 
 	}
+	
+	@CommandHandler
+	public void handle(CancelProductReservationCommand cancelProductReservationCommand) {
+		ProductReservationCancelledEvent productReservationCancelledEvent  = ProductReservationCancelledEvent.builder()
+				.productId(cancelProductReservationCommand.getProductId())
+				.orderId(cancelProductReservationCommand.getOrderId())
+				.quantity(cancelProductReservationCommand.getQuantity())
+				.userId(cancelProductReservationCommand.getUserId())
+				.cancellationReason(cancelProductReservationCommand.getCancellationReason())
+				.build();
+		
+		AggregateLifecycle.apply(productReservationCancelledEvent);
+	}
 
 	/**
 	 * Naming convention is very short for event sourcing methods. <br>
@@ -144,5 +159,12 @@ public class ProductAggregate {
 		LOGGER.info("Inside Event Source Handler for ProductReservedEvent to subtract the quantity ");
 		//We only need to change the available  quantity. Rest w 
 		this.quantity -= productReservedEvent.getQuantity();
+	}
+	
+	@EventSourcingHandler
+	public void on(ProductReservationCancelledEvent productReservationCancelledEvent) {
+		LOGGER.info("Inside Event Source Handler for ProductReservationCancelledEvent to add the quantity ");
+		//We only need to change the available  quantity. Rest w 
+		this.quantity += productReservationCancelledEvent.getQuantity();
 	}
 }
