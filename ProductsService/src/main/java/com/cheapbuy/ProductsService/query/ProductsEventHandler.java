@@ -3,6 +3,7 @@ package com.cheapbuy.ProductsService.query;
 import org.axonframework.config.ProcessingGroup;
 import org.axonframework.eventhandling.EventHandler;
 import org.axonframework.eventhandling.ListenerInvocationErrorHandler;
+import org.axonframework.eventhandling.ResetHandler;
 import org.axonframework.messaging.interceptors.ExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,4 +101,11 @@ public class ProductsEventHandler {
 		entityToBeUpdated.setQuantity(entityToBeUpdated.getQuantity()+event.getQuantity());
 		productsRepository.save(entityToBeUpdated);
 	}
+	
+	@ResetHandler
+	public void reset() {
+		LOGGER.warn("Reset Handler Called to Empty Products Table");
+		productsRepository.deleteAll();
+	}
+	
 }

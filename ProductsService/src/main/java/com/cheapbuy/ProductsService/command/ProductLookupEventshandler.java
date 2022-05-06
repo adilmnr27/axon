@@ -2,6 +2,7 @@ package com.cheapbuy.ProductsService.command;
 
 import org.axonframework.config.ProcessingGroup;
 import org.axonframework.eventhandling.EventHandler;
+import org.axonframework.eventhandling.ResetHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -36,5 +37,11 @@ public class ProductLookupEventshandler {
 		ProductLookupEntity entity = new ProductLookupEntity(productCreatedEvent.getProductId(), productCreatedEvent.getTitle());
 		productLookupRepository.save(entity);
 		
+	}
+	
+	@ResetHandler
+	public void reset() {
+		LOGGER.warn("Reset Handler Called to Empty ProductLookUp Table");
+		productLookupRepository.deleteAll();
 	}
 }

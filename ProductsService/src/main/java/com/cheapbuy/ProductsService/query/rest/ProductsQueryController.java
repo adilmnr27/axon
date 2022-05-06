@@ -29,6 +29,10 @@ public class ProductsQueryController {
 	public ProductsQueryController(QueryGateway queryGateway) {
 		this.queryGateway = queryGateway;
 	}
+	
+	/**
+	 * http://localhost:8082/products-service/products
+	 */
 	@GetMapping()
 	public List<ProductRestModel> getProducts(){
 		
