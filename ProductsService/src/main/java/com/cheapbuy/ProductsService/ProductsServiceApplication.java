@@ -2,11 +2,15 @@ package com.cheapbuy.ProductsService;
 
 import org.axonframework.commandhandling.CommandBus;
 import org.axonframework.config.EventProcessingConfigurer;
+import org.axonframework.eventsourcing.EventCountSnapshotTriggerDefinition;
+import org.axonframework.eventsourcing.SnapshotTriggerDefinition;
+import org.axonframework.eventsourcing.Snapshotter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
 
 import com.cheapbuy.ProductsService.command.interceptors.CreateProductCommandInterceptor;
 import com.cheapbuy.ProductsService.core.errorhandling.ProductsServiceEventsErrorHandler;
@@ -53,5 +57,13 @@ public class ProductsServiceApplication {
 		config.registerListenerInvocationErrorHandler("product-group", conf -> PropagatingErrorHandler.instance());
 	}
 	*/
+	
+	/**
+	 The name needs to be mentioned in appropriate Aggregate Class
+	 */
+	@Bean(name="productSnapshotTriggerDefinition")
+	SnapshotTriggerDefinition productSnapshotTriggerDefinition(Snapshotter snapshotter) {
+		return new EventCountSnapshotTriggerDefinition(snapshotter, 3);//seconn argument is number of events after which snapshot is done
+	}
 	
 }

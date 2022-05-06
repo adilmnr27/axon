@@ -19,7 +19,7 @@ import com.cheapbuy.core.commands.ReserveProductCommand;
 import com.cheapbuy.core.events.ProductReservationCancelledEvent;
 import com.cheapbuy.core.events.ProductReservedEvent;
 
-@Aggregate // Axon framework will know its an Aggregate class
+@Aggregate(snapshotTriggerDefinition = "productSnapshotTriggerDefinition") // Axon framework will know its an Aggregate class
 public class ProductAggregate {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ProductAggregate.class);
