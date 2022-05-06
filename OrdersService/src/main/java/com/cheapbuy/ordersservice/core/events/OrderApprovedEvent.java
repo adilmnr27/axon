@@ -11,6 +11,6 @@ import lombok.Value;
 public class OrderApprovedEvent {
 	
 	private final String orderId;
-	private final OrderStatus orderStatus = OrderStatus.CREATED;
+	private final OrderStatus orderStatus = OrderStatus.APPROVED;
 
 }

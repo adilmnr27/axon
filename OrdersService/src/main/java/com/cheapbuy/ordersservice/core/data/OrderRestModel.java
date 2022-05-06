@@ -1,7 +1,5 @@
 package com.cheapbuy.ordersservice.core.data;
 
-import com.cheapbuy.ordersservice.command.CreateOrderCommand;
-
 import lombok.Builder;
 import lombok.Data;
 

@@ -15,6 +15,7 @@ import org.axonframework.modelling.saga.SagaEventHandler;
 import org.axonframework.modelling.saga.SagaLifecycle;
 import org.axonframework.modelling.saga.StartSaga;
 import org.axonframework.queryhandling.QueryGateway;
+import org.axonframework.queryhandling.QueryUpdateEmitter;
 import org.axonframework.spring.stereotype.Saga;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,9 +31,12 @@ import com.cheapbuy.core.model.User;
 import com.cheapbuy.core.query.FetchUserPaymentDetailsQuery;
 import com.cheapbuy.ordersservice.command.ApproveOrderCommand;
 import com.cheapbuy.ordersservice.command.RejectOrderCommand;
+import com.cheapbuy.ordersservice.core.data.OrderRestModel;
+import com.cheapbuy.ordersservice.core.data.OrderSummary;
 import com.cheapbuy.ordersservice.core.events.OrderApprovedEvent;
 import com.cheapbuy.ordersservice.core.events.OrderCreatedEvent;
 import com.cheapbuy.ordersservice.core.events.OrderRejectedEvent;
+import com.cheapbuy.ordersservice.query.FindOrderQuery;
 
 /**
  * Orchestration Saga Design Pattern.<br>
@@ -57,11 +61,16 @@ public class OrderSaga {
 	@Autowired
 	private transient DeadlineManager deadlineManager;
 	
+	@Autowired
+	private transient QueryUpdateEmitter queryUpdateEmitter; //To handle subscriptionQuery
+	
 	private String deadlineId; //TODO: need to check for thread safety
 	
 	private static final String PAYMENT_PROCESSING_DEADLINE = "payment-processing-deadline";
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(OrderSaga.class);
+	
+	
 	
 //	public OrderSaga(CommandGateway commandGateway) {
 //		this.commandGateway = commandGateway;
@@ -78,6 +87,10 @@ public class OrderSaga {
 	// that a specific saga monitors.
 	@SagaEventHandler(associationProperty = "orderId")
 	public void handle(OrderCreatedEvent orderCreatedEvent) {
+		
+		//For subscription Query
+//		queryUpdateEmitter.emit(FindOrderQuery.class, query -> true,
+//				new OrderSummary(orderCreatedEvent.getOrderId(), orderCreatedEvent.getOrderStatus()));
 		
 		LOGGER.info("Orders Saga: Handling OrderCreatedEvent");
 		ReserveProductCommand reserveProductCommand = ReserveProductCommand.builder()
@@ -98,6 +111,11 @@ public class OrderSaga {
 							commandResultMessage.exceptionResult().getMessage());
 					
 					//Start a compensating transaction
+					RejectOrderCommand rejectOrderCommand = RejectOrderCommand.builder()
+							.orderId(reserveProductCommand.getOrderId())
+							.cancellationReason(commandResultMessage.exceptionResult().getMessage())
+							.build();
+					commandGateway.send(rejectOrderCommand);
 				}
 
 			}
@@ -213,6 +231,10 @@ public class OrderSaga {
 	public void handle(OrderApprovedEvent orderApprovedEvent) {
 		LOGGER.info("Order Approved succesfully for orderid {} ",
 				orderApprovedEvent.getOrderId());
+
+		//For subscription Query
+		queryUpdateEmitter.emit(FindOrderQuery.class, query -> true,
+				new OrderSummary(orderApprovedEvent.getOrderId(), orderApprovedEvent.getOrderStatus()));
 		
 		SagaLifecycle.end();
 	}
@@ -223,7 +245,7 @@ public class OrderSaga {
 				productReservationCancelledEvent.getOrderId());
 		RejectOrderCommand rejectOrderCommand = RejectOrderCommand.builder()
 				.orderId(productReservationCancelledEvent.getOrderId())
-				.cancellationReason(productReservationCancelledEvent.getOrderId())
+				.cancellationReason(productReservationCancelledEvent.getCancellationReason())
 				.build();
 		commandGateway.send(rejectOrderCommand);
 	}
@@ -233,6 +255,10 @@ public class OrderSaga {
 	public void handle(OrderRejectedEvent orderRejectedEvent) {
 		LOGGER.info("OrderSaga: Order Successfully Rejected for orderid {} ",
 				orderRejectedEvent.getOrderId());
+		
+		//For subscription Query
+		queryUpdateEmitter.emit(FindOrderQuery.class, query -> true,
+				new OrderSummary(orderRejectedEvent.getOrderId(), orderRejectedEvent.getOrderStatus()));
 	}
 	
 	/**
